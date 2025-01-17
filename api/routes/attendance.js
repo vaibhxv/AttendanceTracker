@@ -6,17 +6,19 @@ const router = express.Router();
 
 // Create attendance record
 router.post('/', authenticateToken, async (req, res) => {
-    const { className, present } = req.body;
-    const date = new Date(); // Set the current date
+    const { className } = req.body;
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
 
-    // Check if attendance for today already exists
-    const existingAttendance = await Attendance.findOne({ className, date: date.toISOString().split('T')[0], user: req.user.id });
+    // Check if attendance for today already exists for the specific class
+    const existingAttendance = await Attendance.findOne({ className, date: dateString, user: req.user.id });
 
     if (existingAttendance) {
-        return res.status(400).json({ message: 'Attendance for today already recorded' });
+        return res.status(400).json({ message: 'Attendance for today already recorded for this class' });
     }
 
-    const attendance = new Attendance({ className, date, present, user: req.user.id }); // Associate with user
+    // Create a new attendance record with present set to false by default
+    const attendance = new Attendance({ className, date: dateString, user: req.user.id }); // present defaults to false
     await attendance.save();
     res.status(201).json(attendance);
 });
@@ -30,7 +32,7 @@ router.put('/:className/:date', authenticateToken, async (req, res) => {
         const attendance = await Attendance.findOneAndUpdate(
             { className, date, user: req.user.id }, // Ensure only the user's record is updated
             { present },
-            { new: true, upsert: true }
+            { new: true, upsert: true } // Upsert to create if it doesn't exist
         );
         res.json(attendance);
     } catch (error) {
@@ -40,6 +42,7 @@ router.put('/:className/:date', authenticateToken, async (req, res) => {
 
 // Get all attendance records for the current user
 router.get('/', authenticateToken, async (req, res) => {
+    const date = new Date();
     const records = await Attendance.find({ user: req.user.id }); // Filter by user
     res.json(records);
 });

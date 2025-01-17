@@ -90,7 +90,8 @@ export default function AttendanceTracker() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [holidayDate, setHolidayDate] = useState<Date | undefined>(new Date());
   const [holidayReason, setHolidayReason] = useState('');
-  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Attendance>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Record<string, Attendance>>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchAttendanceSummary = async () => {
     try {
@@ -122,11 +123,53 @@ export default function AttendanceTracker() {
     }
   };
 
+  const markAllAbsentForToday = async () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    
+    try {
+      // First, get current attendance records for today
+      const attendanceResponse = await axios.get(`http://localhost:8080/api/attendance?date=${today}`);
+      const existingRecords = attendanceResponse.data.reduce((acc: Record<string, Attendance>, record: Attendance) => {
+        acc[record.className] = record;
+        return acc;
+      }, {});
+
+      // Mark absent for all classes that don't have records
+      const markAbsentPromises = timetables.map(async (timetable) => {
+        if (!existingRecords[timetable.className]) {
+          return axios.put(
+            `http://localhost:8080/api/attendance/${encodeURIComponent(timetable.className)}/${today}`,
+            { present: false }
+          );
+        }
+      });
+
+      await Promise.all(markAbsentPromises.filter(Boolean));
+      
+      // Refresh the data
+      await fetchAttendance();
+      await fetchAttendanceSummary();
+
+    } catch (error) {
+      console.error('Failed to mark all absent:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize attendance",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }};
   const fetchTimetables = async () => {
-    const today = new Date();
-    const dayOfWeek = format(today, 'EEEE');
-    const response = await axios.get(`http://localhost:8080/api/timetable/${dayOfWeek}`);
-    setTimetables(response.data);
+    try {
+      const today = new Date();
+      const dayOfWeek = format(today, 'EEEE');
+      const response = await axios.get(`http://localhost:8080/api/timetable/${dayOfWeek}`);
+      setTimetables(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch timetables:', error);
+      return [];
+    }
   };
 
   const fetchHolidays = async () => {
@@ -139,10 +182,21 @@ export default function AttendanceTracker() {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
       const response = await axios.get(`http://localhost:8080/api/attendance?date=${today}`);
-      const records: Record<string, Attendance> = {};
+      const records: Record<string, Record<string, Attendance>> = {};
+      
+      // Initialize the records for today's date
+      if (!records[today]) {
+        records[today] = {};
+      }
+      
+      // Store each attendance record under the appropriate date
       response.data.forEach((record: Attendance) => {
-        records[record.className] = record;
+        if (!records[record.date]) {
+          records[record.date] = {};
+        }
+        records[record.date][record.className] = record;
       });
+      
       setAttendanceRecords(records);
     } catch (error) {
       console.error('Failed to fetch attendance:', error);
@@ -180,11 +234,13 @@ export default function AttendanceTracker() {
       );
       setAttendanceRecords(prev => ({
         ...prev,
-        [timetable.className]: response.data,
+        [date]: {
+          ...(prev[date] || {}),
+          [timetable.className]: response.data,
+        },
       }));
 
       fetchAttendanceSummary();
-      // Show colored toast based on attendance status
       toast({
         title: present ? "Present" : "Absent",
         description: present 
@@ -206,6 +262,7 @@ export default function AttendanceTracker() {
     }
   };
 
+
   const getPercentageColorClass = (percentage: number) => {
     if (percentage >= 75) return 'text-green-600';
     if (percentage >= 60) return 'text-yellow-600';
@@ -213,40 +270,34 @@ export default function AttendanceTracker() {
   };
 
   useEffect(() => {
-    fetchTimetables();
-    fetchHolidays();
-    fetchAttendance();
-    fetchAttendanceSummary();
-  }, []);
+    const initializeData = async () => {
+      if (!isInitialized) {
+        // First, fetch timetables
+        const fetchedTimetables = await fetchTimetables();
+        
+        // Only proceed if we have timetables
+        if (fetchedTimetables && fetchedTimetables.length > 0) {
+          await fetchHolidays();
+          await fetchAttendance();
+          // Mark all absent only after we have timetables
+          await markAllAbsentForToday();
+          await fetchAttendanceSummary();
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    initializeData();
+  }, [isInitialized]);
+
 
   const getAttendanceButton = (timetable: Timetable) => {
-    const record = attendanceRecords[timetable.className];
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const record = attendanceRecords[today]?.[timetable.className];
     
-    if (!record) {
-        return (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => toggleAttendance(timetable, true)}
-              className="md:w-[100px] w-auto"
-            >
-              <h2>P</h2>
-              <span className="hidden md:inline">Mark Present</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => toggleAttendance(timetable, false)}
-              className="md:w-[100px] w-auto"
-            >
-              <h2>A</h2>
-              <span className="hidden md:inline">Mark Absent</span>
-            </Button>
-          </div>
-        );
-      }
-
-    return record.present ? (
+    // If we have a record and it's marked present
+    if (record?.present) {
+      return (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -267,7 +318,12 @@ export default function AttendanceTracker() {
             <span className="hidden md:inline">Mark Absent</span>
           </Button>
         </div>
-      ) : (
+      );
+    }
+    
+    // If we have a record and it's marked absent
+    if (record && !record.present) {
+      return (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -288,7 +344,31 @@ export default function AttendanceTracker() {
           </Button>
         </div>
       );
-    };
+    }
+    
+    // If we don't have a record yet
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => toggleAttendance(timetable, true)}
+          className="md:w-[100px] w-auto"
+        >
+          <h2>P</h2>
+          <span className="hidden md:inline">Mark Present</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => toggleAttendance(timetable, false)}
+          className="md:w-[100px] w-auto"
+        >
+          <h2>A</h2>
+          <span className="hidden md:inline">Mark Absent</span>
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-1">
@@ -300,28 +380,35 @@ export default function AttendanceTracker() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {attendanceSummary.map((summary) => (
-            <Card key={summary.className}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{summary.className}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Percent className="h-4 w-4" />
-                    <span className={`text-2xl font-bold ${getPercentageColorClass(summary.percentage)}`}>
-                      {summary.percentage}%
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {summary.presentCount}/{summary.totalClasses} classes
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 sm:p-6 md:gap-4">
+  {attendanceSummary.map((summary) => (
+    <Card 
+      key={summary.className}
+      className="transition-all duration-200 hover:shadow-lg"
+    >
+      <CardHeader className="pb-2 space-y-1">
+        <CardTitle className="text-base sm:text-lg font-semibold tracking-tight">
+          {summary.className}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-row items-center justify-between space-x-2">
+          <div className="flex items-center gap-1.5">
+            <Percent className="h-4 w-4 text-muted-foreground" />
+            <span 
+              className={`text-xl sm:text-2xl font-bold ${getPercentageColorClass(summary.percentage)}`}
+            >
+              {summary.percentage}%
+            </span>
+          </div>
+          <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+            {summary.presentCount}/{summary.totalClasses} classes
+          </div>
         </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card>
