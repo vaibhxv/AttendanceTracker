@@ -39,7 +39,7 @@ interface Attendance {
   _id: string;
   className: string;
   date: string;
-  present: boolean;
+  status: 'present' | 'absent' | 'pending';
 }
 
 interface AttendanceSummary {
@@ -58,7 +58,6 @@ export default function AttendanceTracker() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const token = localStorage.getItem('token');
-  // Create axios instance with authorization header
   const axiosAuth = axios.create({
     headers: {
       Authorization: `Bearer ${token}`
@@ -75,7 +74,7 @@ export default function AttendanceTracker() {
       allRecords.forEach(record => {
         const current = summaryMap.get(record.className) || { present: 0, total: 0 };
         summaryMap.set(record.className, {
-          present: current.present + (record.present ? 1 : 0),
+          present: current.present + (record.status === 'present' ? 1 : 0),
           total: current.total + 1
         });
       });
@@ -91,44 +90,8 @@ export default function AttendanceTracker() {
     } catch (error) {
       console.error('Failed to fetch attendance summary:', error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        // Handle unauthorized access
         window.location.href = '/login';
       }
-    }
-  };
-
-  const markAllAbsentForToday = async () => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    
-    try {
-      const attendanceResponse = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance?date=${today}`);
-      const existingRecords = attendanceResponse.data.reduce((acc: Record<string, Attendance>, record: Attendance) => {
-        acc[record.className] = record;
-        return acc;
-      }, {});
-
-      const markAbsentPromises = timetables.map(async (timetable) => {
-        if (!existingRecords[timetable.className]) {
-          return axiosAuth.put(
-            `${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance/${encodeURIComponent(timetable.className)}/${today}`,
-            { present: false }
-          );
-        }
-      });
-
-      await Promise.all(markAbsentPromises.filter(Boolean));
-      await fetchAttendance();
-      await fetchAttendanceSummary();
-    } catch (error) {
-      console.error('Failed to mark all absent:', error);
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        window.location.href = '/login';
-      }
-      toast({
-        title: "Error",
-        description: "Failed to initialize attendance",
-        variant: "destructive",
-      });
     }
   };
 
@@ -165,10 +128,8 @@ export default function AttendanceTracker() {
       const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance?date=${today}`);
       const records: Record<string, Record<string, Attendance>> = {};
       
-      // Initialize today's records
       records[today] = {};
       
-      // Process each record from the response
       response.data.forEach((record: Attendance) => {
         records[today][record.className] = record;
       });
@@ -182,12 +143,12 @@ export default function AttendanceTracker() {
     }
   };
 
-  const toggleAttendance = async (timetable: Timetable, present: boolean) => {
+  const toggleAttendance = async (timetable: Timetable, status: 'present' | 'absent') => {
     try {
       const date = format(new Date(), 'yyyy-MM-dd');
       const response = await axiosAuth.put(
         `${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance/${encodeURIComponent(timetable.className)}/${date}`,
-        { present }
+        { status }
       );
       setAttendanceRecords(prev => ({
         ...prev,
@@ -199,11 +160,9 @@ export default function AttendanceTracker() {
 
       fetchAttendanceSummary();
       toast({
-        title: present ? "Present" : "Absent",
-        description: present 
-          ? `${timetable.className} marked present successfully` 
-          : `${timetable.className} marked absent successfully`,
-        className: present 
+        title: status === 'present' ? "Present" : "Absent",
+        description: `${timetable.className} marked ${status} successfully`,
+        className: status === 'present'
           ? "bg-green-50 border-green-200 text-green-800" 
           : "bg-red-50 border-red-200 text-red-800",
       })
@@ -235,7 +194,6 @@ export default function AttendanceTracker() {
           await fetchAttendanceSummary();
           await fetchAttendance();
           await fetchHolidays();
-          await markAllAbsentForToday();
           setIsInitialized(true);
         }
       }
@@ -248,21 +206,18 @@ export default function AttendanceTracker() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const record = attendanceRecords[today]?.[timetable.className];
     
-    // Debug log to verify the record state
-    console.log('Record for', timetable.className, ':', record);
-    
     return (
       <div className="flex gap-2">
         <Button
           size="sm"
-          variant={record?.present ? "ghost" : "default"}
-          onClick={() => toggleAttendance(timetable, true)}
-          disabled={record?.present === true}
+          variant={record?.status === 'present' ? "ghost" : "default"}
+          onClick={() => toggleAttendance(timetable, 'present')}
+          disabled={record?.status === 'present'}
           className={`md:w-[100px] w-auto ${
-            record?.present ? "text-green-600 cursor-not-allowed" : "bg-green-600"
+            record?.status === 'present' ? "text-green-600 cursor-not-allowed" : "bg-green-600"
           }`}
         >
-          {record?.present === true ? (
+          {record?.status === 'present' ? (
             <>
               <Check className="h-4 w-4" />
               <span className="hidden md:inline ml-1">Present</span>
@@ -276,14 +231,14 @@ export default function AttendanceTracker() {
         </Button>
         <Button
           size="sm"
-          variant={record?.present === false ? "ghost" : "destructive"}
-          onClick={() => toggleAttendance(timetable, false)}
-          disabled={record?.present === false}
+          variant={record?.status === 'absent' ? "ghost" : "destructive"}
+          onClick={() => toggleAttendance(timetable, 'absent')}
+          disabled={record?.status === 'absent'}
           className={`md:w-[100px] w-auto ${
-            record?.present === false ? "text-red-600 cursor-not-allowed" : ""
+            record?.status === 'absent' ? "text-red-600 cursor-not-allowed" : ""
           }`}
         >
-          {record?.present === false ? (
+          {record?.status === 'absent' ? (
             <>
               <X className="h-4 w-4" />
               <span className="hidden md:inline ml-1">Absent</span>
@@ -303,8 +258,6 @@ export default function AttendanceTracker() {
     const [startTime, endTime] = timeString.split('-').map(t => t.trim());
     return { startTime, endTime };
   };
-
-
 
   return (
     <AuroraBackground>
@@ -339,7 +292,6 @@ export default function AttendanceTracker() {
               <CardContent>
                 <div className="flex flex-row items-center justify-between space-x-2">
                   <div className="flex items-center gap-1">
-                    
                     <span 
                       className={`text-xl sm:text-2xl font-bold ${getPercentageColorClass(summary.percentage)}`}
                     >

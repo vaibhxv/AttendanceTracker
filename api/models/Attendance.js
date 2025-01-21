@@ -3,8 +3,13 @@ const mongoose = require('mongoose');
 const attendanceSchema = new mongoose.Schema({
     className: { type: String, required: true },
     date: { type: Date, required: true },
-    present: { type: Boolean, required: true, default: false },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User ', required: true } // Add user reference
+    status: { 
+        type: String, 
+        enum: ['present', 'absent', 'pending'],
+        default: 'pending',
+        required: true 
+    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });
 
 // Ensure unique attendance for each user, class, and date

@@ -17,8 +17,13 @@ router.post('/', authenticateToken, async (req, res) => {
         return res.status(400).json({ message: 'Attendance for today already recorded for this class' });
     }
 
-    // Create a new attendance record with present set to false by default
-    const attendance = new Attendance({ className, date: dateString, user: req.user.id }); // present defaults to false
+    // Create a new attendance record with status set to 'pending' by default
+    const attendance = new Attendance({ 
+        className, 
+        date: dateString, 
+        user: req.user.id,
+        status: 'pending' // status will default to 'pending' as defined in the model
+    });
     await attendance.save();
     res.status(201).json(attendance);
 });
@@ -26,12 +31,17 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update attendance record
 router.put('/:className/:date', authenticateToken, async (req, res) => {
     const { className, date } = req.params;
-    const { present } = req.body;
+    const { status } = req.body;
+
+    // Validate status
+    if (!['present', 'absent', 'pending'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+    }
 
     try {
         const attendance = await Attendance.findOneAndUpdate(
             { className, date, user: req.user.id }, // Ensure only the user's record is updated
-            { present },
+            { status },
             { new: true, upsert: true } // Upsert to create if it doesn't exist
         );
         res.json(attendance);
@@ -42,16 +52,36 @@ router.put('/:className/:date', authenticateToken, async (req, res) => {
 
 // Get all attendance records for the current user
 router.get('/', authenticateToken, async (req, res) => {
-    const date = new Date();
-    const records = await Attendance.find({ user: req.user.id }); // Filter by user
-    res.json(records);
+    try {
+        const { date } = req.query;
+        const query = { user: req.user.id };
+        
+        // If date is provided, filter by date
+        if (date) {
+            query.date = date;
+        }
+        
+        const records = await Attendance.find(query);
+        res.json(records);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // Calculate total attendance for the current user
 router.get('/count', authenticateToken, async (req, res) => {
     try {
-        const count = await Attendance.countDocuments({ user: req.user.id, present: true }); // Count present days
-        res.json({ totalPresent: count });
+        const totalCount = await Attendance.countDocuments({ user: req.user.id });
+        const presentCount = await Attendance.countDocuments({ 
+            user: req.user.id, 
+            status: 'present' 
+        });
+        
+        res.json({ 
+            total: totalCount,
+            present: presentCount,
+            percentage: totalCount > 0 ? (presentCount / totalCount) * 100 : 0
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
