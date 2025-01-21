@@ -2,7 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { SparklesCore } from './ui/sparkles';
@@ -40,24 +40,17 @@ export default function Login({ setToken }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8 md:py-12">
-      <div className="flex flex-col items-center space-y-8 w-full max-w-4xl mx-auto">
-        <motion.h1
-          initial={{ opacity: 0.5, y: 100 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="bg-gradient-to-br from-slate-300 to-slate-900 bg-clip-text text-center text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-transparent"
-        >
-          Welcome back!
-        </motion.h1>
+    <div className="min-h-screen py-12 items-center justify-center bg-background px-4">
+      <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
 
         <Card className="w-full max-w-md mx-auto shadow-xl">
             <CardHeader className="space-y-2">
-              <CardTitle className="text-center text-2xl font-semibold">Login</CardTitle>
+            <motion.h1
+          
+          className="bg-gradient-to-br from-slate-300 to-slate-900 bg-clip-text text-center text-4xl font-semibold tracking-tight text-transparent"
+        >
+          Welcome back!
+        </motion.h1>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
