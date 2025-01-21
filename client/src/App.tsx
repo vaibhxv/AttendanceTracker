@@ -13,7 +13,7 @@ const App = () => {
     <Router>
       <div className="min-h-screen bg-background">
         <Navbar token={token} setToken={setToken} />
-        <div className="container mx-auto px-4">
+        <div className="container">
           <Routes>
             <Route
               path="/signup"

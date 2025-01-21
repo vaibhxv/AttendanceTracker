@@ -319,13 +319,13 @@ export default function AttendanceTracker() {
         className="relative flex flex-col gap-4 items-center justify-center px-4"
       ></motion.div>
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto space-y-8 py-8 px-1">
+      <div className="max-w-7xl mx-auto space-y-8 py-8 px-4">
         <div className="flex items-center gap-2">
           <School2 className="h-8 w-8 text-primary" />
           <h1 className="text-3xl text-white font-bold">Attendance Tracker</h1>
         </div>
   
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 sm:p-1 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {attendanceSummary.map((summary) => (
             <Card 
               key={summary.className}
