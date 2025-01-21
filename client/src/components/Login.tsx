@@ -40,9 +40,9 @@ export default function Login({ setToken }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen py-12 items-center justify-center bg-background px-4">
+    <div className="min-h-screen py-12 items-center justify-center bg-background">
       <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
-
+      <div className='w-full px-4'>
         <Card className="w-full max-w-md mx-auto shadow-xl">
             <CardHeader className="space-y-2">
             <motion.h1
@@ -89,7 +89,9 @@ export default function Login({ setToken }: AuthProps) {
             </CardContent>
           </Card>
 
-        <div className="w-full max-w-4xl h-40 relative mt-8">
+          </div>
+
+        <div className="w-full justify-items-center max-w-4xl h-40 relative">
           {/* Gradients */}
           <div className="absolute inset-x-20 top-0 bg-gradient-to-r from-transparent via-indigo-500 to-transparent h-[2px] w-3/4 blur-sm" />
           <div className="absolute inset-x-20 top-0 bg-gradient-to-r from-transparent via-indigo-500 to-transparent h-px w-3/4" />
