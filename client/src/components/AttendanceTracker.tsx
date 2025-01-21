@@ -318,7 +318,7 @@ export default function AttendanceTracker() {
         }}
         className="relative flex flex-col gap-4 items-center justify-center px-4"
       ></motion.div>
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full">
       <div className="max-w-7xl mx-auto space-y-8 py-8 px-4">
         <div className="flex items-center gap-2">
           <School2 className="h-8 w-8 text-primary" />
