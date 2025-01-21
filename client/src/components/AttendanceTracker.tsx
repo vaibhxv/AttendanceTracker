@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CalendarDays, CheckCircle2, School2, Check, X } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Timetable {
@@ -214,18 +214,18 @@ export default function AttendanceTracker() {
           onClick={() => toggleAttendance(timetable, 'present')}
           disabled={record?.status === 'present'}
           className={`md:w-[100px] w-auto ${
-            record?.status === 'present' ? "text-green-600 cursor-not-allowed" : "bg-green-600"
+            record?.status === 'present' ? "text-green-600 text-white cursor-not-allowed" : "bg-green-800 text-white"
           }`}
         >
           {record?.status === 'present' ? (
             <>
               <Check className="h-4 w-4" />
-              <span className="hidden md:inline ml-1">Present</span>
+              <span className="hidden md:inline ml-1 text-white">Present</span>
             </>
           ) : (
             <>
               <h2>P</h2>
-              <span className="hidden md:inline">Mark Present</span>
+              <span className="hidden md:inline text-white">Mark Present</span>
             </>
           )}
         </Button>
@@ -235,18 +235,18 @@ export default function AttendanceTracker() {
           onClick={() => toggleAttendance(timetable, 'absent')}
           disabled={record?.status === 'absent'}
           className={`md:w-[100px] w-auto ${
-            record?.status === 'absent' ? "text-red-600 cursor-not-allowed" : ""
+            record?.status === 'absent' ? "text-red-600 text-white cursor-not-allowed" : ""
           }`}
         >
           {record?.status === 'absent' ? (
             <>
               <X className="h-4 w-4" />
-              <span className="hidden md:inline ml-1">Absent</span>
+              <span className="hidden md:inline ml-1 text-white">Absent</span>
             </>
           ) : (
             <>
               <h2>A</h2>
-              <span className="hidden md:inline">Mark Absent</span>
+              <span className="hidden md:inline text-white">Mark Absent</span>
             </>
           )}
         </Button>
@@ -274,7 +274,6 @@ export default function AttendanceTracker() {
     <div className="min-h-screen bg-background w-full">
       <div className="max-w-7xl mx-auto space-y-8 py-8 px-4">
         <div className="flex items-center gap-2">
-          <School2 className="h-8 w-8 text-primary" />
           <h1 className="text-3xl text-white font-bold">Attendance Tracker</h1>
         </div>
   
@@ -282,10 +281,10 @@ export default function AttendanceTracker() {
           {attendanceSummary.map((summary) => (
             <Card 
               key={summary.className}
-              className="transition-all duration-200 hover:shadow-lg"
+              className="transition-all duration-200 hover:shadow-lg "
             >
               <CardHeader className="pb-2 space-y-1">
-                <CardTitle className="text-base sm:text-lg font-semibold tracking-tight">
+                <CardTitle className="text-base sm:text-lg font-semibold tracking-tight z-50">
                   {summary.className}
                 </CardTitle>
               </CardHeader>
@@ -293,12 +292,12 @@ export default function AttendanceTracker() {
                 <div className="flex flex-row items-center justify-between space-x-2">
                   <div className="flex items-center gap-1">
                     <span 
-                      className={`text-xl sm:text-2xl font-bold ${getPercentageColorClass(summary.percentage)}`}
+                      className={`text-xl sm:text-2xl font-bold z-30 ${getPercentageColorClass(summary.percentage)}`}
                     >
                       {summary.percentage}%
                     </span>
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                  <div className="text-xs z-30 sm:text-sm text-muted-foreground whitespace-nowrap">
                     {summary.presentCount}/{summary.totalClasses} classes
                   </div>
                 </div>
