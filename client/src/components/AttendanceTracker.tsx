@@ -163,15 +163,12 @@ export default function AttendanceTracker() {
       const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance?date=${today}`);
       const records: Record<string, Record<string, Attendance>> = {};
       
-      if (!records[today]) {
-        records[today] = {};
-      }
+      // Initialize today's records
+      records[today] = {};
       
+      // Process each record from the response
       response.data.forEach((record: Attendance) => {
-        if (!records[record.date]) {
-          records[record.date] = {};
-        }
-        records[record.date][record.className] = record;
+        records[today][record.className] = record;
       });
       
       setAttendanceRecords(records);
@@ -249,73 +246,52 @@ export default function AttendanceTracker() {
     const today = format(new Date(), 'yyyy-MM-dd');
     const record = attendanceRecords[today]?.[timetable.className];
     
-    if (record?.present) {
-      return (
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="md:w-[100px] w-auto text-green-600"
-            disabled
-          >
-            <Check className="h-4 w-4" />
-            <span className="hidden md:inline ml-1">Present</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => toggleAttendance(timetable, false)}
-            className="md:w-[100px] w-auto"
-          >
-            <h2>A</h2>
-            <span className="hidden md:inline">Mark Absent</span>
-          </Button>
-        </div>
-      );
-    }
-    
-    if (record && !record.present) {
-      return (
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={() => toggleAttendance(timetable, true)}
-            className="md:w-[100px] w-auto bg-green-600"
-          >
-            <h2>P</h2>
-            <span className="hidden md:inline">Mark Present</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="md:w-[100px] w-auto text-red-600"
-            disabled
-          >
-            <X className="h-4 w-4" />
-            <span className="hidden md:inline ml-1">Absent</span>
-          </Button>
-        </div>
-      );
-    }
+    // Debug log to verify the record state
+    console.log('Record for', timetable.className, ':', record);
     
     return (
       <div className="flex gap-2">
         <Button
           size="sm"
+          variant={record?.present ? "ghost" : "default"}
           onClick={() => toggleAttendance(timetable, true)}
-          className="md:w-[100px] w-auto"
+          disabled={record?.present === true}
+          className={`md:w-[100px] w-auto ${
+            record?.present ? "text-green-600 cursor-not-allowed" : "bg-green-600"
+          }`}
         >
-          <h2>P</h2>
-          <span className="hidden md:inline">Mark Present</span>
+          {record?.present === true ? (
+            <>
+              <Check className="h-4 w-4" />
+              <span className="hidden md:inline ml-1">Present</span>
+            </>
+          ) : (
+            <>
+              <h2>P</h2>
+              <span className="hidden md:inline">Mark Present</span>
+            </>
+          )}
         </Button>
         <Button
           size="sm"
-          variant="destructive"
+          variant={record?.present === false ? "ghost" : "destructive"}
           onClick={() => toggleAttendance(timetable, false)}
-          className="md:w-[100px] w-auto"
+          disabled={record?.present === false}
+          className={`md:w-[100px] w-auto ${
+            record?.present === false ? "text-red-600 cursor-not-allowed" : ""
+          }`}
         >
-          <h2>A</h2>
-          <span className="hidden md:inline">Mark Absent</span>
+          {record?.present === false ? (
+            <>
+              <X className="h-4 w-4" />
+              <span className="hidden md:inline ml-1">Absent</span>
+            </>
+          ) : (
+            <>
+              <h2>A</h2>
+              <span className="hidden md:inline">Mark Absent</span>
+            </>
+          )}
         </Button>
       </div>
     );
