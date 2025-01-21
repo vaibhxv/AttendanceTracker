@@ -297,6 +297,13 @@ export default function AttendanceTracker() {
     );
   };
 
+  const splitTime = (timeString: string) => {
+    const [startTime, endTime] = timeString.split('-').map(t => t.trim());
+    return { startTime, endTime };
+  };
+
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto space-y-8 py-8 px-1">
@@ -346,26 +353,36 @@ export default function AttendanceTracker() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full overflow-hidden">
-              <Table>
-                <TableHeader>
+          <div className="w-full overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">Time</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {timetables.length === 0 ? (
                   <TableRow>
-                    <TableHead className="w-[80px]">Time</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      No classes scheduled for today
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {timetables.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">
-                        No classes scheduled for today
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    timetables.map((timetable) => (
+                ) : (
+                  timetables.map((timetable) => {
+                    const { startTime, endTime } = splitTime(timetable.time);
+                    return (
                       <TableRow key={timetable._id}>
-                        <TableCell className="whitespace-nowrap text-sm">{timetable.time}</TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          <div className="hidden md:block">
+                            {timetable.time}
+                          </div>
+                          <div className="md:hidden flex flex-col space-y-1">
+                            <span className="font-medium">{startTime}</span>
+                            <span className="text-muted-foreground">{endTime}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
                             {timetable.className}
@@ -373,11 +390,12 @@ export default function AttendanceTracker() {
                         </TableCell>
                         <TableCell className="p-1">{getAttendanceButton(timetable)}</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
           </CardContent>
         </Card>
   
