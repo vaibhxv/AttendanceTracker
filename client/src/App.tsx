@@ -4,12 +4,14 @@ import AttendanceTracker from './components/AttendanceTracker';
 import Login from './components/Login';
 import Register from './components/Register';
 import Navbar from './components/Navbar';
+import { ThemeProvider } from './components/theme-provider';
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   return (
+    <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navbar token={token} setToken={setToken} />
         <div className="container mx-auto px-4">
           <Routes>
@@ -33,6 +35,7 @@ const App = () => {
         </div>
       </div>
     </Router>
+    </ThemeProvider>
   );
 };
 

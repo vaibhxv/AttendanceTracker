@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast"
+import { AuroraBackground } from './ui/aurora-background';
+import {motion} from 'framer-motion'
 import {
   Card,
   CardContent,
@@ -305,11 +307,22 @@ export default function AttendanceTracker() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuroraBackground>
+      <motion.div
+        initial={{ opacity: 0.0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: 0.3,
+          duration: 0.8,
+          ease: "easeInOut",
+        }}
+        className="relative flex flex-col gap-4 items-center justify-center px-4"
+      ></motion.div>
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto space-y-8 py-8 px-1">
         <div className="flex items-center gap-2">
           <School2 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Attendance Tracker</h1>
+          <h1 className="text-3xl text-white font-bold">Attendance Tracker</h1>
         </div>
   
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 sm:p-1 md:gap-4">
@@ -430,5 +443,6 @@ export default function AttendanceTracker() {
         </Card>
       </div>
     </div>
+    </AuroraBackground>
   );
 }

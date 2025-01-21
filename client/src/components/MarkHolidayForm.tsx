@@ -1,9 +1,27 @@
 import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
 import axios from 'axios'
 import { useToast } from "@/hooks/use-toast"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Calendar } from "@/components/ui/calendar"
+
+const formSchema = z.object({
+  date: z.date({
+    required_error: "Please select a date",
+  }),
+  reason: z.string().min(1, "Reason is required"),
+})
 
 interface MarkHolidayFormProps {
   onSuccess: () => void
@@ -11,29 +29,29 @@ interface MarkHolidayFormProps {
 
 export default function MarkHolidayForm({ onSuccess }: MarkHolidayFormProps) {
   const { toast } = useToast()
-  const [holidayDate, setHolidayDate] = useState<Date | undefined>(new Date())
-  const [holidayReason, setHolidayReason] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const token = localStorage.getItem('token')
 
-  // Get token from localStorage
-  const token = localStorage.getItem('token');
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      date: new Date(),
+      reason: "",
+    },
+  })
 
-  // Create axios instance with authorization header
   const axiosAuth = axios.create({
     headers: {
       Authorization: `Bearer ${token}`
     }
-  });
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!holidayDate) return
-    
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     try {
       await axiosAuth.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/timetable/holiday`, {
-        date: holidayDate.toISOString(),
-        reason: holidayReason,
+        date: values.date.toISOString(),
+        reason: values.reason,
       })
       toast({
         title: "Success",
@@ -53,25 +71,48 @@ export default function MarkHolidayForm({ onSuccess }: MarkHolidayFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium">Select Date</label>
-        <Calendar
-          mode="single"
-          selected={holidayDate}
-          onSelect={setHolidayDate}
-          className="border rounded-md"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Calendar
+                  mode="single"
+                  selected={field.value}
+                  onSelect={field.onChange}
+                  disabled={(date) =>
+                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
+                  initialFocus
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <Input
-        placeholder="Reason for Holiday"
-        value={holidayReason}
-        onChange={(e) => setHolidayReason(e.target.value)}
-        required
-      />
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Marking..." : "Mark as Holiday"}
-      </Button>
-    </form>
+
+        <FormField
+          control={form.control}
+          name="reason"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reason</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter holiday reason" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Marking..." : "Mark as Holiday"}
+        </Button>
+      </form>
+    </Form>
   )
 }

@@ -45,33 +45,31 @@ async function processAttendanceForDate(date) {
       return;
     }
 
-    // Get all timetable entries for this day
+    // Get all timetable entries for this specific day only
     const timetableEntries = await Timetable.find({ day: dayOfWeek });
 
     // Process each timetable entry
-
-    
-
     for (const entry of timetableEntries) {
       try {
-        // Use findOneAndUpdate with upsert instead of creating new records
-        const attendance = await Attendance.findOneAndUpdate(
-          {
+        // First check if attendance already exists for this class and date
+        const existingAttendance = await Attendance.findOne({
+          className: entry.className,
+          date: dateString,
+          user: entry.user
+        });
+
+        // Only create a new attendance record if one doesn't exist
+        if (!existingAttendance) {
+          await Attendance.create({
             className: entry.className,
             date: dateString,
-            user: entry.user
-          },
-          {
-            $setOnInsert: { present: false } // Only set present: false if creating a new record
-          },
-          {
-            upsert: true,
-            new: true,
-            setDefaultsOnInsert: true
-          }
-        );
-
-        console.log(`Processed attendance for ${entry.className} - User: ${entry.user} - Date: ${dateString}`);
+            user: entry.user,
+            present: false
+          });
+          console.log(`Created new attendance record for ${entry.className} - User: ${entry.user} - Date: ${dateString}`);
+        } else {
+          console.log(`Attendance record already exists for ${entry.className} - User: ${entry.user} - Date: ${dateString}`);
+        }
       } catch (error) {
         console.error(`Error processing individual attendance: ${error.message}`);
       }
