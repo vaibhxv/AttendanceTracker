@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast"
@@ -22,7 +22,6 @@ import {
 import { CalendarDays, CheckCircle2, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { MultiStepLoader as Loader } from '../components/ui/multi-step-loader';
-import { IconSquareRoundedX } from "@tabler/icons-react";
 
 interface Timetable {
   _id: string;
