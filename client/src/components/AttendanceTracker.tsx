@@ -203,12 +203,12 @@ export default function AttendanceTracker() {
     const initializeData = async () => {
       if (!isInitialized) {
         setLoading(true);
+        await fetchAttendanceSummary();
+        await fetchHolidays();
         const fetchedTimetables = await fetchTimetables();
         if (fetchedTimetables && fetchedTimetables.length > 0) {
           console.log(token);
-          await fetchAttendanceSummary();
           await fetchAttendance();
-          await fetchHolidays();
           setIsInitialized(true);
         }
         setLoading(false);
