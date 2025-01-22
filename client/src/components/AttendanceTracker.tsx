@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast"
 import { AuroraBackground } from './ui/aurora-background';
-import {motion} from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Card,
   CardContent,
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/table';
 import { CalendarDays, CheckCircle2, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { MultiStepLoader as Loader } from '../components/ui/multi-step-loader';
+import { IconSquareRoundedX } from "@tabler/icons-react";
 
 interface Timetable {
   _id: string;
@@ -49,6 +51,18 @@ interface AttendanceSummary {
   percentage: number;
 }
 
+// Define the loading states
+const loadingStates = [
+  { text: "Waking up the hamsters to power the servers" },
+  { text: "Convincing the holidays to show up on time" },
+  { text: "Brewing a fresh pot of digital coffee" },
+  { text: "Teaching robots to count attendance" },
+  { text: "Juggling timetables in the cloud" },
+  { text: "Making sure no holidays are left behind" },
+  { text: "Warming up the data engines" },
+  { text: "Finalizing data..." },
+];
+
 export default function AttendanceTracker() {
   const { toast } = useToast()
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary[]>([]);
@@ -56,6 +70,7 @@ export default function AttendanceTracker() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Record<string, Attendance>>>({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const token = localStorage.getItem('token');
   const axiosAuth = axios.create({
@@ -188,6 +203,7 @@ export default function AttendanceTracker() {
   useEffect(() => {
     const initializeData = async () => {
       if (!isInitialized) {
+        setLoading(true);
         const fetchedTimetables = await fetchTimetables();
         if (fetchedTimetables && fetchedTimetables.length > 0) {
           console.log(token);
@@ -196,6 +212,7 @@ export default function AttendanceTracker() {
           await fetchHolidays();
           setIsInitialized(true);
         }
+        setLoading(false);
       }
     };
 
@@ -260,6 +277,8 @@ export default function AttendanceTracker() {
   };
 
   return (
+    <>
+    <Loader loadingStates={loadingStates} loading={loading} duration={1500} />
     <AuroraBackground>
       <motion.div
         initial={{ opacity: 0.0, y: 40 }}
@@ -270,130 +289,132 @@ export default function AttendanceTracker() {
           ease: "easeInOut",
         }}
         className="relative flex flex-col gap-4 items-center justify-center px-4"
-      ></motion.div>
-    <div className="min-h-screen bg-background w-full">
-      <div className="max-w-7xl mx-auto space-y-8 py-8 px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl text-white font-bold">Attendance Tracker</h1>
-        </div>
-  
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {attendanceSummary.map((summary) => (
-            <Card 
-              key={summary.className}
-              className="transition-all duration-200 hover:shadow-lg "
-            >
-              <CardHeader className="pb-2 space-y-1">
-                <CardTitle className="text-base sm:text-lg font-semibold tracking-tight z-50">
-                  {summary.className}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-row items-center justify-between space-x-2">
-                  <div className="flex items-center gap-1">
-                    <span 
-                      className={`text-xl sm:text-2xl font-bold z-30 ${getPercentageColorClass(summary.percentage)}`}
-                    >
-                      {summary.percentage}%
-                    </span>
-                  </div>
-                  <div className="text-xs z-30 sm:text-sm text-muted-foreground whitespace-nowrap">
-                    {summary.presentCount}/{summary.totalClasses} classes
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-  
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle>Today's Classes</CardTitle>
-            </div>
-            <CardDescription>
-              {format(new Date(), 'EEEE, MMMM do, yyyy')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-          <div className="w-full overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Time</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {timetables.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
-                      No classes scheduled for today
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  timetables.map((timetable) => {
-                    const { startTime, endTime } = splitTime(timetable.time);
-                    return (
-                      <TableRow key={timetable._id}>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          <div className="hidden md:block">
-                            {timetable.time}
-                          </div>
-                          <div className="md:hidden flex flex-col space-y-1">
-                            <span className="font-medium">{startTime}</span>
-                            <span className="text-muted-foreground">{endTime}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                            {timetable.className}
-                          </div>
-                        </TableCell>
-                        <TableCell className="p-1">{getAttendanceButton(timetable)}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+      >
+      </motion.div>
+      <div className="min-h-screen bg-background w-full">
+        <div className="max-w-7xl mx-auto space-y-8 py-8 px-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl text-white font-bold">Attendance Tracker</h1>
           </div>
-          </CardContent>
-        </Card>
   
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-primary" />
-              <CardTitle>Upcoming Holidays</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {holidays.length === 0 ? (
-                <p className="text-center text-muted-foreground">No upcoming holidays</p>
-              ) : (
-                holidays.map((holiday) => (
-                  <div
-                    key={holiday._id}
-                    className="flex items-center justify-between p-4 rounded-lg border"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {format(new Date(holiday.date), 'MMMM do, yyyy')}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{holiday.reason}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {attendanceSummary.map((summary) => (
+              <Card 
+                key={summary.className}
+                className="transition-all duration-200 hover:shadow-lg "
+              >
+                <CardHeader className="pb-2 space-y-1">
+                  <CardTitle className="text-base sm:text-lg font-semibold tracking-tight z-50">
+                    {summary.className}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-row items-center justify-between space-x-2">
+                    <div className="flex items-center gap-1">
+                      <span 
+                        className={`text-xl sm:text-2xl font-bold z-30 ${getPercentageColorClass(summary.percentage)}`}
+                      >
+                        {summary.percentage}%
+                      </span>
+                    </div>
+                    <div className="text-xs z-30 sm:text-sm text-muted-foreground whitespace-nowrap">
+                      {summary.presentCount}/{summary.totalClasses} classes
                     </div>
                   </div>
-                ))
-              )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+  
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <CardTitle>Today's Classes</CardTitle>
+              </div>
+              <CardDescription>
+                {format(new Date(), 'EEEE, MMMM do, yyyy')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <div className="w-full overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Time</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {timetables.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground">
+                        No classes scheduled for today
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    timetables.map((timetable) => {
+                      const { startTime, endTime } = splitTime(timetable.time);
+                      return (
+                        <TableRow key={timetable._id}>
+                          <TableCell className="whitespace-nowrap text-sm">
+                            <div className="hidden md:block">
+                              {timetable.time}
+                            </div>
+                            <div className="md:hidden flex flex-col space-y-1">
+                              <span className="font-medium">{startTime}</span>
+                              <span className="text-muted-foreground">{endTime}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                              {timetable.className}
+                            </div>
+                          </TableCell>
+                          <TableCell className="p-1">{getAttendanceButton(timetable)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+  
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                <CardTitle>Upcoming Holidays</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {holidays.length === 0 ? (
+                  <p className="text-center text-muted-foreground">No upcoming holidays</p>
+                ) : (
+                  holidays.map((holiday) => (
+                    <div
+                      key={holiday._id}
+                      className="flex items-center justify-between p-4 rounded-lg border"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {format(new Date(holiday.date), 'MMMM do, yyyy')}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{holiday.reason}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
     </AuroraBackground>
+    </>
   );
 }
