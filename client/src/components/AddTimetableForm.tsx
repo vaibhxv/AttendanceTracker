@@ -58,7 +58,7 @@ export default function AddTimetableForm({ onSuccess }: AddTimetableFormProps) {
     setIsLoading(true)
     
     try {
-      await axiosAuth.post('https://attendanceapi.everythingwithai.com/api/timetable', { className, day, time })
+      await axiosAuth.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/timetable`, { className, day, time })
       toast({
         title: "Success",
         description: "Timetable added successfully",

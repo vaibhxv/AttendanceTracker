@@ -31,7 +31,7 @@ export default function MarkHolidayForm({ onSuccess }: MarkHolidayFormProps) {
     
     setIsLoading(true)
     try {
-      await axiosAuth.post('https://attendanceapi.everythingwithai.com/api/timetable/holiday', {
+      await axiosAuth.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/timetable/holiday`, {
         date: holidayDate.toISOString(),
         reason: holidayReason,
       })

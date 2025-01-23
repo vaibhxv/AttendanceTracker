@@ -67,7 +67,7 @@ export default function AttendanceTracker() {
 
   const fetchAttendanceSummary = async () => {
     try {
-      const response = await axiosAuth.get('http://localhost:8080/api/attendance');
+      const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance`);
       const allRecords: Attendance[] = response.data;
       
       const summaryMap = new Map<string, { present: number; total: number }>();
@@ -101,7 +101,7 @@ export default function AttendanceTracker() {
     const today = format(new Date(), 'yyyy-MM-dd');
     
     try {
-      const attendanceResponse = await axiosAuth.get(`http://localhost:8080/api/attendance?date=${today}`);
+      const attendanceResponse = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance?date=${today}`);
       const existingRecords = attendanceResponse.data.reduce((acc: Record<string, Attendance>, record: Attendance) => {
         acc[record.className] = record;
         return acc;
@@ -110,7 +110,7 @@ export default function AttendanceTracker() {
       const markAbsentPromises = timetables.map(async (timetable) => {
         if (!existingRecords[timetable.className]) {
           return axiosAuth.put(
-            `http://localhost:8080/api/attendance/${encodeURIComponent(timetable.className)}/${today}`,
+            `${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance/${encodeURIComponent(timetable.className)}/${today}`,
             { present: false }
           );
         }
@@ -136,7 +136,7 @@ export default function AttendanceTracker() {
     try {
       const today = new Date();
       const dayOfWeek = format(today, 'EEEE');
-      const response = await axiosAuth.get(`http://localhost:8080/api/timetable/${dayOfWeek}`);
+      const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/timetable/${dayOfWeek}`);
       setTimetables(response.data);
       return response.data;
     } catch (error) {
@@ -150,7 +150,7 @@ export default function AttendanceTracker() {
 
   const fetchHolidays = async () => {
     try {
-      const response = await axiosAuth.get('http://localhost:8080/api/timetable/');
+      const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/timetable/`);
       setHolidays(response.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -162,7 +162,7 @@ export default function AttendanceTracker() {
   const fetchAttendance = async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const response = await axiosAuth.get(`http://localhost:8080/api/attendance?date=${today}`);
+      const response = await axiosAuth.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance?date=${today}`);
       const records: Record<string, Record<string, Attendance>> = {};
       
       if (!records[today]) {
@@ -189,7 +189,7 @@ export default function AttendanceTracker() {
     try {
       const date = format(new Date(), 'yyyy-MM-dd');
       const response = await axiosAuth.put(
-        `http://localhost:8080/api/attendance/${encodeURIComponent(timetable.className)}/${date}`,
+        `${import.meta.env.VITE_APP_BACKEND_URL}/api/attendance/${encodeURIComponent(timetable.className)}/${date}`,
         { present }
       );
       setAttendanceRecords(prev => ({

@@ -20,7 +20,7 @@ export default function Login({ setToken }: AuthProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post(`${import.meta.env.VITE_APP_BACKEND_URL}/api/auth/login`, {
         email,
         password,
       });

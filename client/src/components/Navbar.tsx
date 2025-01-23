@@ -35,7 +35,7 @@ export default function Navbar({ token, setToken }: AuthProps) {
     const fetchUserData = async () => {
       if (token) {
         try {
-          const response = await axios.get('http://localhost:8080/api/auth/me', {
+          const response = await axios.get(`${import.meta.env.VITE_APP_BACKEND_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUserData(response.data);
