@@ -1,21 +1,34 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
-export default function Login() {
+
+export interface AuthProps {
+  setToken: (token: string) => void;
+}
+
+export default function Login({ setToken }: AuthProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
   const { toast } = useToast();
 
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
-      window.location.href = '/';
+      const response = await axios.post('http://localhost:8080/api/auth/login', {
+        email,
+        password,
+      });
+      
+      const token = response.data.token;
+      localStorage.setItem('token', token);
+      setToken(token);
+      navigate('/dashboard');
     } catch (error) {
       toast({
         title: "Error",
@@ -52,7 +65,7 @@ export default function Login() {
             </Button>
             <p className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <a href="/register" className="text-blue-600 hover:underline">
+              <a href="/signup" className="text-blue-600 hover:underline">
                 Register
               </a>
             </p>

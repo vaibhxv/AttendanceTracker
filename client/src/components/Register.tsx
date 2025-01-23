@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,19 +13,33 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export default function Register() {
+export interface AuthProps {
+  token: string | null;
+  setToken: (token: string | null) => void;
+}
+
+export default function Register({ setToken }:AuthProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
-  const { register } = useAuth();
   const { toast } = useToast();
 
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register(name, email, password, role);
-      window.location.href = '/';
+      const response = await axios.post('http://localhost:8080/api/auth/register', {
+        name,
+        email,
+        password,
+        role,
+      });
+      
+      const token = response.data.token;
+      localStorage.setItem('token', token);
+      setToken(token);
+      navigate('/dashboard');
     } catch (error) {
       toast({
         title: "Error",

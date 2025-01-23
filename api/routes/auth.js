@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role, name: user.name },
-            JWT_SECRET
+            JWT_SECRET | 'my-jwt-secret-key-yoohoo'
         );
 
         res.status(201).json({
@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role, name: user.name },
-            JWT_SECRET
+            JWT_SECRET | 'my-jwt-secret-key-yoohoo'
         );
 
         res.json({

@@ -5,11 +5,14 @@ const dotenv = require('dotenv');
 const attendanceRoutes = require('./routes/attendance');
 const timetableRoutes = require('./routes/timetable');
 const { router: authRoutes, authenticateToken } = require('./routes/auth');
+const { scheduleAttendanceCheck } = require('./service/attendanceService');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+scheduleAttendanceCheck();
 
 // Middleware
 app.use(cors());
