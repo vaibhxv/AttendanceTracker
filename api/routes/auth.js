@@ -17,7 +17,7 @@ const authenticateToken = async (req, res, next) => {
         req.user = verified;
         next();
     } catch (error) {
-        res.status(400).json({ message: 'Invalid token' });
+        res.status(400).json({token});
     }
 };
 
@@ -99,7 +99,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({token, message: error.message });
     }
 });
 

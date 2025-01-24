@@ -7,8 +7,6 @@ import Navbar from './components/Navbar';
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem('token'));
-
-
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">

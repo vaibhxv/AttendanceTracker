@@ -91,9 +91,9 @@ export default function Register({ setToken }:AuthProps) {
             </Button>
             <p className="text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <a href="/login" className="text-blue-600 hover:underline">
+              <Button onClick={()=> navigate('/login')}>
                 Login
-              </a>
+              </Button>
             </p>
           </form>
         </CardContent>

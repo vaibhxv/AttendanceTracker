@@ -102,7 +102,7 @@ export default function Navbar({ token, setToken }: AuthProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="default" onClick={() => window.location.href = '/login'}>
+              <Button variant="default" onClick={() => navigate('/login')}>
                 Login
               </Button>
             )}

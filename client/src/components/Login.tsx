@@ -65,9 +65,9 @@ export default function Login({ setToken }: AuthProps) {
             </Button>
             <p className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <a href="/signup" className="text-blue-600 hover:underline">
-                Register
-              </a>
+              <Button onClick={()=> navigate('/signup')}>
+                Signup
+                </Button>
             </p>
           </form>
         </CardContent>

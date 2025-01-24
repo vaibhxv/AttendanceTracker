@@ -55,9 +55,7 @@ export default function AttendanceTracker() {
   const [attendanceRecords, setAttendanceRecords] = useState<Record<string, Record<string, Attendance>>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Get token from localStorage
   const token = localStorage.getItem('token');
-
   // Create axios instance with authorization header
   const axiosAuth = axios.create({
     headers: {
@@ -234,6 +232,7 @@ export default function AttendanceTracker() {
       if (!isInitialized) {
         const fetchedTimetables = await fetchTimetables();
         if (fetchedTimetables && fetchedTimetables.length > 0) {
+          console.log(token);
           await fetchAttendanceSummary();
           await fetchAttendance();
           await fetchHolidays();
