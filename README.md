@@ -2,13 +2,8 @@
 
 A modern attendance tracking application built with React and Node.js that automatically manages user attendance status through scheduled tasks.
 
-<!-- Method 1: Simple markdown syntax -->
-![Video Demo](screenshot2.mov)
+![Video Demo](screenshot2.gif)
 
-<!-- Method 2: HTML video tag (recommended for more control) -->
-<video autoplay loop muted playsinline>
-  <source src="screenshot2.mov" type="video/mp4">
-</video>
 
 ## Features ✨
 
